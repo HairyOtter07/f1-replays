@@ -6,6 +6,11 @@ export default defineNuxtConfig({
     "@nuxtjs/tailwindcss",
     "@primevue/nuxt-module"
   ],
+  nitro: {
+    routeRules: {
+      "/api/**": { proxy: "https://livetiming.formula1.com/static/**" }
+    }
+  },
   primevue: {
     options: {
       unstyled: true

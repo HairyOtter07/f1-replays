@@ -1,0 +1,164 @@
+<template>
+  <div>
+    <h1 class="text-4xl">Hello, World!</h1>
+    <p>{{ loadingMessage }}</p>
+  </div>
+</template>
+<script setup>
+import pako from "pako";
+import { Buffer } from "buffer";
+
+// const race = "2023-09-17_Singapore"
+// const race = "2024-07-07_British"
+const race = "2024-06-23_Spanish";
+
+const loadingMessage = ref("Loading...");
+
+const reactToRef = (reference, handler, handlerArgs = []) => {
+  if (reference.value) {
+    handler(...handlerArgs)
+  } else {
+    watch(reference, () => {
+      handler(...handlerArgs);
+    });
+  }
+}
+
+const sessionToComponents = (sessionTimestamp) => {
+  let [h, m, sms] = sessionTimestamp.split(":");
+  let [s, ms] = sms.split(".");
+  return [Number(h), Number(m), Number(s), Number(ms)];
+}
+
+const getInitialTime = () => {
+  const { data } = useLazyAsyncData("heartbeat", async () => {
+    const res = await $fetch(`/api/${race.split("-")[0]}/${race}_Grand_Prix/${race.split("_")[0]}_Race/Heartbeat.jsonStream`,
+      {
+        responseType: "text",
+      },
+    );
+    return res;
+  });
+
+  const t0 = ref(null);
+
+  const heartbeatHandler = () => {
+    const heartbeatRecord = data.value.split("\r\n")[0];
+    const [sessionTimestamp, raw] = [
+      heartbeatRecord.slice(0, heartbeatRecord.indexOf("{")),
+      heartbeatRecord.slice(heartbeatRecord.indexOf("{")),
+    ];
+
+    const [firstHours, firstMinutes, firstSeconds, firstMilliseconds] = sessionToComponents(sessionTimestamp);
+    const heartbeat = new Date(JSON.parse(raw).Utc);
+    t0.value = new Date(new Date(heartbeat).setUTCHours(heartbeat.getUTCHours() - firstHours, heartbeat.getUTCMinutes() - firstMinutes, heartbeat.getUTCSeconds() - firstSeconds, heartbeat.getUTCMilliseconds() - firstMilliseconds));
+  }
+
+  reactToRef(data, heartbeatHandler);
+
+  return t0;
+}
+
+const sessionToUtc = (sessionTimestamp, initialTime) => {
+  const [h, m, s, ms] = sessionToComponents(sessionTimestamp);
+  const utc = new Date(new Date(initialTime).setUTCHours(initialTime.getUTCHours() + h, initialTime.getUTCMinutes() + m, initialTime.getUTCSeconds() + s, initialTime.getUTCMilliseconds() + ms));
+  return utc;
+}
+
+const t0 = getInitialTime();
+
+const fetchEndpoint = (endpoint) => {
+  const { data, status, error } = useLazyAsyncData(endpoint, async () => {
+    const res = await $fetch(`/api/${race.split("-")[0]}/${race}_Grand_Prix/${race.split("_")[0]}_Race/${endpoint}`,
+      {
+        responseType: "text",
+      },
+    );
+    return res;
+  });
+
+  const parsed = ref(null);
+
+  watch(data, () => {
+    if (data.value.startsWith("<Error>")) {
+      return {
+        error: `Error fetching data: endpoint "${endpoint}" not found.`,
+      };
+    }
+
+    if (/\.json$/.test(endpoint)) {
+      parsed.value = JSON.parse(data.value);
+    } else if (/\.z\.jsonStream$/.test(endpoint)) {
+      const records = data.value.split('"\r\n').slice(0, -1);
+      let out = [];
+      for (const record of records) {
+        const [sessionTimestamp, rawData] = record.split('"');
+        const decompressed = pako.inflateRaw(Buffer.from(rawData, "base64"), {
+          to: "string",
+        });
+        out.push({ timestamp: sessionToUtc(sessionTimestamp, t0.value), data: JSON.parse(decompressed) });
+      }
+      parsed.value = out;
+    } else {
+      //.jsonStream
+      const records = data.value.split("\r\n").slice(0, -1);
+      let out = [];
+      for (const record of records) {
+        const [sessionTimestamp, raw] = [
+          record.slice(0, record.indexOf("{")),
+          record.slice(record.indexOf("{")),
+        ];
+        out.push({ timestamp: sessionToUtc(sessionTimestamp, t0.value), data: JSON.parse(raw) });
+      }
+      parsed.value = out;
+    }
+  });
+
+  return parsed;
+};
+
+const endpoints = [
+  "SessionStatus.jsonStream",
+  "LapCount.jsonStream",
+  "TimingAppData.jsonStream",
+  "DriverList.json",
+  "Position.z.jsonStream",
+  "CarData.z.jsonStream",
+];
+
+const fetchAllEndpoints = (endpoints) => {
+  const data = ref(null);
+  const status = ref(false);
+
+  if (endpoints.length > 1) {
+    const fetchedData = fetchEndpoint(endpoints[0]);
+    reactToRef(fetchedData, () => {
+      const { data: rest } = fetchAllEndpoints(endpoints.slice(1));
+      reactToRef(rest, () => {
+        const combined = [fetchedData.value, ...rest.value];
+        data.value = combined;
+        status.value = true;
+      });
+    });
+  } else {
+    const fetchedData = fetchEndpoint(endpoints[0]);
+    reactToRef(fetchedData, () => {
+      data.value = [fetchedData.value];
+      status.value = true;
+    });
+  }
+
+  return { data, status };
+}
+
+const loadData = () => {
+  const { data, status } = fetchAllEndpoints(endpoints);
+  reactToRef(status, () => {
+    if (status.value) {
+      loadingMessage.value = "Done.";
+    }
+  });
+}
+
+reactToRef(t0, loadData);
+</script>
