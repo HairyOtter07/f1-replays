@@ -3,6 +3,4 @@
     <NuxtLink to="/test">Go</NuxtLink>
   </div>
 </template>
-<script setup>
-
-</script>
+<script setup></script>
