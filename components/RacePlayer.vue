@@ -1,13 +1,13 @@
 <template>
-  <div>
+  <div class="flex flex-col w-full items-center">
     <div ref="d3Chart"></div>
-    <div
-      class="hidden flex-col text-sm bg-zinc-800 text-zinc-200 rounded-md py-2 px-3 !m-0"
-      ref="tooltip"
-    >
-      <p><strong>name: </strong>{{ hoverDriverName }}</p>
-      <p><strong>team: </strong>{{ hoverDriverTeam }}</p>
-    </div>
+  </div>
+  <div
+    class="hidden flex-col text-sm bg-zinc-800 text-zinc-200 rounded-md py-2 px-3 !m-0"
+    ref="tooltip"
+  >
+    <p><strong>name: </strong>{{ hoverDriverName }}</p>
+    <p><strong>team: </strong>{{ hoverDriverTeam }}</p>
   </div>
 </template>
 <script setup>
@@ -147,6 +147,7 @@ const renderRace = () => {
       const [x, y] = d3.pointer(event);
       const closestDriver = closestPoint({ x, y }, 125);
       if (closestDriver) {
+        console.log(closestDriver);
         showTooltip(closestDriver);
       }
     })

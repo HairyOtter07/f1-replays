@@ -9,9 +9,9 @@
 import pako from "pako";
 import { Buffer } from "buffer";
 
-// const race = "2023-09-17_Singapore"
+const race = "2023-09-17_Singapore"
 // const race = "2024-07-07_British"
-const race = "2024-06-23_Spanish";
+// const race = "2024-06-23_Spanish";
 const raceData = ref([]);
 
 const loadingMessage = ref("Loading...");
@@ -179,6 +179,7 @@ const fetchAllEndpoints = (endpoints) => {
 };
 
 const interpolateValue = (min, max, percent) => {
+  if (min == max) return min;
   return min + (max - min) * percent;
 };
 
@@ -327,6 +328,7 @@ const processData = async (dataArray) => {
           speed: car.data[driverKey].Channels[2],
           color: driver.TeamColour,
           name: driver.FullName,
+          number: driver.RacingNumber,
           team: driver.TeamName,
           image: driver.HeadshotUrl,
         };
