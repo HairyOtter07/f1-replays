@@ -2,6 +2,7 @@
   <div>
     <h1 class="text-4xl">Hello, World!</h1>
     <p>{{ loadingMessage }}</p>
+    <RacePlayer :data="raceData" />
   </div>
 </template>
 <script setup>
@@ -11,6 +12,7 @@ import { Buffer } from "buffer";
 // const race = "2023-09-17_Singapore"
 // const race = "2024-07-07_British"
 const race = "2024-06-23_Spanish";
+const raceData = ref([]);
 
 const loadingMessage = ref("Loading...");
 
@@ -176,6 +178,10 @@ const fetchAllEndpoints = (endpoints) => {
   return { data, status };
 };
 
+const interpolateValue = (min, max, percent) => {
+  return min + (max - min) * percent;
+};
+
 const processData = async (dataArray) => {
   const delay = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
@@ -190,12 +196,7 @@ const processData = async (dataArray) => {
   const position = dataArray.find((e) => e.endpoint == "position").data;
   const carData = dataArray.find((e) => e.endpoint == "cardata").data;
 
-  console.log(sessionStatus);
-  console.log(lapCount);
   console.log(timingAppData);
-  console.log(driverList);
-  console.log(position);
-  console.log(carData);
 
   const data = [];
 
@@ -234,6 +235,7 @@ const processData = async (dataArray) => {
 
   let posIndex = 0;
   let carIndex = 0;
+  let lap = 0;
   let lastUpdate = new Date();
 
   while (
@@ -266,10 +268,12 @@ const processData = async (dataArray) => {
         )
           continue;
 
-        const interpolatedSpeed =
-          (prevCarData.data[driverKey].Channels[2] +
-            nextCarData.data[driverKey].Channels[2]) /
-          2;
+        const interpolatedSpeed = interpolateValue(
+          prevCarData.data[driverKey].Channels[2],
+          nextCarData.data[driverKey].Channels[2],
+          (timestamp - prevCarData.timestamp) /
+            (nextCarData.timestamp - prevCarData.timestamp),
+        );
         const driver = driverList[driverKey];
 
         driversData[driverKey] = {
@@ -302,10 +306,18 @@ const processData = async (dataArray) => {
         )
           continue;
 
-        const interpolatedX =
-          (prevPos.data[driverKey].X + nextPos.data[driverKey].X) / 2;
-        const interpolatedY =
-          (prevPos.data[driverKey].Y + nextPos.data[driverKey].Y) / 2;
+        const interpolatedX = interpolateValue(
+          prevPos.data[driverKey].X,
+          nextPos.data[driverKey].X,
+          (timestamp - prevPos.timestamp) /
+            (nextPos.timestamp - prevPos.timestamp),
+        );
+        const interpolatedY = interpolateValue(
+          prevPos.data[driverKey].Y,
+          nextPos.data[driverKey].Y,
+          (timestamp - prevPos.timestamp) /
+            (nextPos.timestamp - prevPos.timestamp),
+        );
         const driver = driverList[driverKey];
 
         driversData[driverKey] = {
@@ -322,27 +334,31 @@ const processData = async (dataArray) => {
       carIndex++;
     }
 
+    if (lap < lapCount.length && lapCount[lap].timestamp < timestamp) {
+      lap++;
+    }
+
     data.push({
       timestamp,
       drivers: driversData,
+      lap,
     });
 
-    if (new Date() - lastUpdate > 100) {
+    if (new Date() - lastUpdate > 150) {
       lastUpdate = new Date();
       loadingMessage.value = `Processing...${posIndex + carIndex}/${flattenedPosition.length + flattenedCarData.length}`;
       await delay(0);
     }
   }
 
-  console.log(flattenedPosition.length + flattenedCarData.length);
-  console.log(data);
+  return data;
 };
 
 const loadData = () => {
   const { data, status } = fetchAllEndpoints(endpoints);
   reactToRef(status, async () => {
     if (status.value) {
-      await processData(data.value);
+      raceData.value = await processData(data.value);
       loadingMessage.value = "Done.";
     }
   });
