@@ -282,6 +282,7 @@ const processData = async (dataArray) => {
           speed: interpolatedSpeed,
           color: driver.TeamColour,
           name: driver.FullName,
+          number: driver.RacingNumber,
           team: driver.TeamName,
           image: driver.HeadshotUrl,
         };

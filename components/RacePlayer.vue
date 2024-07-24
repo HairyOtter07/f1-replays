@@ -1,6 +1,13 @@
 <template>
   <div>
     <div ref="d3Chart"></div>
+    <div
+      class="hidden flex-col text-sm bg-zinc-800 text-zinc-200 rounded-md py-2 px-3 !m-0"
+      ref="tooltip"
+    >
+      <p><strong>name: </strong>{{ hoverDriverName }}</p>
+      <p><strong>team: </strong>{{ hoverDriverTeam }}</p>
+    </div>
   </div>
 </template>
 <script setup>
@@ -10,6 +17,7 @@ const props = defineProps({
 import * as d3 from "d3";
 
 const d3Chart = ref(null);
+const tooltip = ref(null);
 const data = computed(() => props.data);
 const chartInfo = computed(() => {
   const minX = Math.min(...data.value.map((d) => d.drivers[1].x)) - 500;
@@ -37,9 +45,56 @@ const chartInfo = computed(() => {
   };
 });
 
+const hoverDriverName = ref("");
+const hoverDriverTeam = ref("");
+
 const isRendered = ref(false);
+const index = ref(0);
 
 let svg = d3.select(d3Chart.value);
+let svgTransform;
+
+const closestPoint = (mousePos, maxDistance) => {
+  if (svgTransform) {
+    mousePos.x = (mousePos.x - svgTransform.x) / svgTransform.k;
+    mousePos.y = (mousePos.y - svgTransform.y) / svgTransform.k;
+  }
+  let minDistance = Number.MAX_VALUE;
+  let driver = null;
+  for (const d of Object.keys(data.value[index.value].drivers).map(
+    (key) => data.value[index.value].drivers[key],
+  )) {
+    const dist = Math.sqrt(
+      Math.pow(mousePos.x - d.x, 2) + Math.pow(mousePos.y - d.y, 2),
+    );
+    if (dist < minDistance) {
+      minDistance = dist;
+      driver = d;
+    }
+  }
+  return maxDistance >= minDistance ? driver : null;
+};
+
+const showTooltip = (driver) => {
+  hoverDriverName.value = driver.name;
+  hoverDriverTeam.value = driver.team;
+  const rect = d3
+    .select(`#driver-${driver.number}`)
+    .node()
+    .getBoundingClientRect();
+  d3.select(tooltip.value)
+    .style("display", "flex")
+    .style("position", "absolute");
+
+  const tooltipRect = d3.select(tooltip.value).node().getBoundingClientRect();
+  d3.select(tooltip.value)
+    .style("left", `${window.scrollX + rect.x - tooltipRect.width / 2}px`)
+    .style("top", `${window.scrollY + rect.y - tooltipRect.height - 3}px`);
+};
+
+const hideTooltip = () => {
+  d3.select(tooltip.value).style("display", "none");
+};
 
 const initDriverPoint = (enter, drivers) => {
   return enter
@@ -52,8 +107,6 @@ const initDriverPoint = (enter, drivers) => {
 };
 
 const updateDriverPoint = (update, duration, drivers) => {
-  console.log(duration);
-
   return update
     .transition()
     .duration(duration)
@@ -75,7 +128,7 @@ const renderRace = () => {
     ])
     .on("zoom", (e) => {
       if (svg) {
-        // svgTransform = e.transform;
+        svgTransform = e.transform;
         svg.attr("transform", e.transform);
         svg
           .selectAll("g>circle")
@@ -90,22 +143,23 @@ const renderRace = () => {
     .attr("height", `${scaledHeight}px`)
     .attr("viewBox", `${minX} ${minY} ${width} ${height}`)
     .call(zoom)
-    // .on("mouseover", (event) => {
-    //     const [x, y] = d3.pointer(event);
-    //     const closestDriver = closestPoint({x, y}, 125);
-    //     if (closestDriver) {
-    //         showTooltip(closestDriver);
-    //     }
-    // })
-    // .on("mousemove", (event) => {
-    //     const [x, y] = d3.pointer(event);
-    //     const closestDriver = closestPoint({x, y}, 125);
-    //     if (closestDriver) {
-    //         showTooltip(closestDriver);
-    //     } else {
-    //         hideTooltip();
-    //     }
-    // })
+    .on("mouseover", (event) => {
+      const [x, y] = d3.pointer(event);
+      const closestDriver = closestPoint({ x, y }, 125);
+      if (closestDriver) {
+        showTooltip(closestDriver);
+      }
+    })
+    .on("mousemove", (event) => {
+      const [x, y] = d3.pointer(event);
+      const closestDriver = closestPoint({ x, y }, 125);
+      if (closestDriver) {
+        console.log(closestDriver);
+        showTooltip(closestDriver);
+      } else {
+        hideTooltip();
+      }
+    })
     .append("g");
 
   const path = d3.path();
@@ -126,12 +180,14 @@ const renderRace = () => {
     .data(Object.keys(data.value[0].drivers))
     .join((enter) => initDriverPoint(enter, data.value[0].drivers));
 
-  setTimeout(() => updateRace(1), 0);
+  setTimeout(updateRace, 0);
 };
 
-const updateRace = (i) => {
-  const { drivers } = data.value[i];
-  const duration = data.value[i].timestamp - data.value[i - 1].timestamp;
+const updateRace = () => {
+  index.value++;
+  const { drivers } = data.value[index.value];
+  const duration =
+    data.value[index.value].timestamp - data.value[index.value - 1].timestamp;
 
   svg
     .selectAll("g>circle")
@@ -141,7 +197,7 @@ const updateRace = (i) => {
       (update) => updateDriverPoint(update, duration, drivers),
     );
 
-  setTimeout(() => updateRace(i + 1), duration);
+  setTimeout(updateRace, duration);
 };
 
 watch(data, () => {
