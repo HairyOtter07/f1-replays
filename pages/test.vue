@@ -2,7 +2,9 @@
   <div>
     <h1 class="text-4xl">Hello, World!</h1>
     <p>{{ loadingMessage }}</p>
-    <RacePlayer :data="raceData" />
+    <div :class="isLoading && 'hidden'">
+      <RacePlayer :data="raceData" />
+    </div>
   </div>
 </template>
 <script setup>
@@ -15,6 +17,7 @@ const race = "2023-09-17_Singapore"
 const raceData = ref([]);
 
 const loadingMessage = ref("Loading...");
+const isLoading = ref(true);
 
 const reactToRef = (reference, handler, handlerArgs = []) => {
   if (reference.value) {
@@ -234,9 +237,15 @@ const processData = async (dataArray) => {
     return out;
   })();
 
+  const leaderboard = {};
+  for (const key of Object.keys(driverList)) {
+    leaderboard[key] = 0;
+  }
+
   let posIndex = 0;
   let carIndex = 0;
   let lap = 0;
+  let leaderboardIndex = 0;
   let lastUpdate = new Date();
 
   while (
@@ -275,12 +284,20 @@ const processData = async (dataArray) => {
           (timestamp - prevCarData.timestamp) /
             (nextCarData.timestamp - prevCarData.timestamp),
         );
+
+        if (Object.keys(timingAppData[leaderboardIndex].data.Lines).includes(driverKey)) {
+          if (Object.keys(timingAppData[leaderboardIndex].data.Lines[driverKey]).includes("Line")) {
+            leaderboard[driverKey] = timingAppData[leaderboardIndex].data.Lines[driverKey].Line;
+          }
+        }
+
         const driver = driverList[driverKey];
 
         driversData[driverKey] = {
           x: pos.data[driverKey].X,
           y: -pos.data[driverKey].Y,
           speed: interpolatedSpeed,
+          position: leaderboard[driverKey],
           color: driver.TeamColour,
           name: driver.FullName,
           number: driver.RacingNumber,
@@ -320,12 +337,21 @@ const processData = async (dataArray) => {
           (timestamp - prevPos.timestamp) /
             (nextPos.timestamp - prevPos.timestamp),
         );
+
+        let position;
+        if (Object.keys(timingAppData[leaderboardIndex].data.Lines).includes(driverKey)) {
+          if (Object.keys(timingAppData[leaderboardIndex].data.Lines[driverKey]).includes("Line")) {
+            leaderboard[driverKey] = timingAppData[leaderboardIndex].data.Lines[driverKey].Line;
+          }
+        }
+
         const driver = driverList[driverKey];
 
         driversData[driverKey] = {
           x: interpolatedX,
           y: -interpolatedY,
           speed: car.data[driverKey].Channels[2],
+          position: leaderboard[driverKey],
           color: driver.TeamColour,
           name: driver.FullName,
           number: driver.RacingNumber,
@@ -341,6 +367,10 @@ const processData = async (dataArray) => {
       lap++;
     }
 
+    if (leaderboardIndex + 1 < timingAppData.length && timingAppData[leaderboardIndex + 1].timestamp < timestamp) {
+      leaderboardIndex++;
+    }
+
     data.push({
       timestamp,
       drivers: driversData,
@@ -354,6 +384,7 @@ const processData = async (dataArray) => {
     }
   }
 
+  console.log(data);
   return data;
 };
 
@@ -363,6 +394,7 @@ const loadData = () => {
     if (status.value) {
       raceData.value = await processData(data.value);
       loadingMessage.value = "Done.";
+      isLoading.value = false;
     }
   });
 };

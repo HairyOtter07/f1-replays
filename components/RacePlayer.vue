@@ -2,6 +2,8 @@
   <div class="flex flex-col w-full p-12 items-center">
     <div ref="d3Chart"></div>
     <PlayerControls v-model:is-playing="isPlaying" v-model:index="index" :data-length="data.length" />
+    <p>Lap {{ currentLap }}/{{ totalLaps }}</p>
+    <Leaderboard :drivers="sortedDrivers" class="w-80" />
   </div>
   <div
     class="hidden flex-col text-sm bg-zinc-800 text-zinc-200 rounded-md py-2 px-3 !m-0"
@@ -53,6 +55,9 @@ const isRendered = ref(false);
 const nextUpdateTimeout = ref(null);
 const isPlaying = ref(true);
 const index = ref(0);
+const sortedDrivers = computed(() => data.value[index.value] ? Object.keys(data.value[index.value].drivers).map(key => data.value[index.value].drivers[key]).sort((a, b) => a.position - b.position) : []);
+const currentLap = ref(0);
+const totalLaps = computed(() => data.value.length > 0 ? data.value[data.value.length - 1].lap : 0);
 
 watch(isPlaying, () => {
     if (!isPlaying.value && nextUpdateTimeout.value) {
@@ -197,10 +202,13 @@ const renderRace = () => {
 
 const updateRace = (jump = false) => {
   index.value++;
-  if (index.value >= data.value.length) return;
-  const { drivers } = data.value[index.value];
+  if (index.value >= data.value.length) {
+    index.value = data.value.length - 1;
+    return;
+  }
+  const { timestamp, drivers, lap } = data.value[index.value];
   const duration = jump ? 0 :
-    data.value[index.value].timestamp - data.value[index.value - 1].timestamp;
+    timestamp - data.value[index.value - 1].timestamp;
 
   svg
     .selectAll("g>circle")
@@ -209,6 +217,8 @@ const updateRace = (jump = false) => {
       (enter) => initDriverPoint(enter, drivers),
       (update) => updateDriverPoint(update, duration, drivers),
     );
+
+  currentLap.value = lap;
 
   nextUpdateTimeout.value = setTimeout(updateRace, duration);
 };
