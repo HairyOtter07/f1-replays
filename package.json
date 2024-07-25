@@ -19,6 +19,7 @@
     "vue": "latest"
   },
   "devDependencies": {
+    "@iconify/vue": "^4.1.2",
     "@primevue/nuxt-module": "^4.0.0",
     "@types/pako": "^2.0.3"
   }

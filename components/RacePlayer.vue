@@ -1,6 +1,7 @@
 <template>
-  <div class="flex flex-col w-full items-center">
+  <div class="flex flex-col w-full p-12 items-center">
     <div ref="d3Chart"></div>
+    <PlayerControls v-model:is-playing="isPlaying" />
   </div>
   <div
     class="hidden flex-col text-sm bg-zinc-800 text-zinc-200 rounded-md py-2 px-3 !m-0"
@@ -49,7 +50,18 @@ const hoverDriverName = ref("");
 const hoverDriverTeam = ref("");
 
 const isRendered = ref(false);
+const nextUpdateTimeout = ref(null);
+const isPlaying = ref(true);
 const index = ref(0);
+
+watch(isPlaying, () => {
+    if (!isPlaying.value && nextUpdateTimeout.value) {
+      clearTimeout(nextUpdateTimeout.value);
+    } else {
+      updateRace();
+    }
+  }
+);
 
 let svg = d3.select(d3Chart.value);
 let svgTransform;
@@ -181,7 +193,7 @@ const renderRace = () => {
     .data(Object.keys(data.value[0].drivers))
     .join((enter) => initDriverPoint(enter, data.value[0].drivers));
 
-  setTimeout(updateRace, 0);
+  nextUpdateTimeout.value = setTimeout(updateRace, 0);
 };
 
 const updateRace = () => {
@@ -198,7 +210,7 @@ const updateRace = () => {
       (update) => updateDriverPoint(update, duration, drivers),
     );
 
-  setTimeout(updateRace, duration);
+  nextUpdateTimeout.value = setTimeout(updateRace, duration);
 };
 
 watch(data, () => {
