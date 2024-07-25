@@ -1,7 +1,7 @@
 <template>
   <div class="flex flex-col w-full p-12 items-center">
     <div ref="d3Chart"></div>
-    <PlayerControls v-model:is-playing="isPlaying" />
+    <PlayerControls v-model:is-playing="isPlaying" v-model:index="index" :data-length="data.length" />
   </div>
   <div
     class="hidden flex-col text-sm bg-zinc-800 text-zinc-200 rounded-md py-2 px-3 !m-0"
@@ -58,7 +58,8 @@ watch(isPlaying, () => {
     if (!isPlaying.value && nextUpdateTimeout.value) {
       clearTimeout(nextUpdateTimeout.value);
     } else {
-      updateRace();
+      if (index.value > 0) index.value--;
+      updateRace(true);
     }
   }
 );
@@ -159,7 +160,6 @@ const renderRace = () => {
       const [x, y] = d3.pointer(event);
       const closestDriver = closestPoint({ x, y }, 125);
       if (closestDriver) {
-        console.log(closestDriver);
         showTooltip(closestDriver);
       }
     })
@@ -167,7 +167,6 @@ const renderRace = () => {
       const [x, y] = d3.pointer(event);
       const closestDriver = closestPoint({ x, y }, 125);
       if (closestDriver) {
-        console.log(closestDriver);
         showTooltip(closestDriver);
       } else {
         hideTooltip();
@@ -196,10 +195,11 @@ const renderRace = () => {
   nextUpdateTimeout.value = setTimeout(updateRace, 0);
 };
 
-const updateRace = () => {
+const updateRace = (jump = false) => {
   index.value++;
+  if (index.value >= data.value.length) return;
   const { drivers } = data.value[index.value];
-  const duration =
+  const duration = jump ? 0 :
     data.value[index.value].timestamp - data.value[index.value - 1].timestamp;
 
   svg
