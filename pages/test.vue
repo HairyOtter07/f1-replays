@@ -11,9 +11,10 @@
 import pako from "pako";
 import { Buffer } from "buffer";
 
-const race = "2023-09-17_Singapore"
+// const race = "2023-09-17_Singapore"
 // const race = "2024-07-07_British"
 // const race = "2024-06-23_Spanish";
+const race = "2024-06-30_Austrian";
 const raceData = ref([]);
 
 const loadingMessage = ref("Loading...");
@@ -57,6 +58,9 @@ const getInitialTime = () => {
 
     const [firstHours, firstMinutes, firstSeconds, firstMilliseconds] =
       sessionToComponents(sessionTimestamp);
+    console.log(JSON.parse(raw));
+    console.log(sessionTimestamp);
+    console.log(sessionToComponents(sessionTimestamp));
     const heartbeat = new Date(JSON.parse(raw).Utc);
     t0.value = new Date(
       new Date(heartbeat).setUTCHours(
@@ -148,7 +152,7 @@ const fetchEndpoint = (endpoint) => {
 const endpoints = [
   "SessionStatus.jsonStream",
   "LapCount.jsonStream",
-  "TimingAppData.jsonStream",
+  "TimingData.jsonStream",
   "DriverList.json",
   "Position.z.jsonStream",
   "CarData.z.jsonStream",
@@ -193,14 +197,19 @@ const processData = async (dataArray) => {
     (e) => e.endpoint == "sessionstatus",
   ).data;
   const lapCount = dataArray.find((e) => e.endpoint == "lapcount").data;
-  const timingAppData = dataArray.find(
-    (e) => e.endpoint == "timingappdata",
-  ).data;
+  const timingData = dataArray
+    .find((e) => e.endpoint == "timingdata")
+    .data.filter(
+      (e) =>
+        Object.keys(e.data.Lines)
+          .map((key) => e.data.Lines[key])
+          .filter((e) => Object.keys(e).includes("Line")).length > 0,
+    );
   const driverList = dataArray.find((e) => e.endpoint == "driverlist").data;
   const position = dataArray.find((e) => e.endpoint == "position").data;
   const carData = dataArray.find((e) => e.endpoint == "cardata").data;
 
-  console.log(timingAppData);
+  console.log(timingData);
 
   const data = [];
 
@@ -217,7 +226,11 @@ const processData = async (dataArray) => {
       }
 
       for (const pos of record.data.Position) {
-        out.push({ timestamp: new Date(pos.Timestamp), data: pos.Entries });
+        out.push({
+          sessionTime: record.timestamp,
+          timestamp: new Date(pos.Timestamp),
+          data: pos.Entries,
+        });
       }
     }
     return out;
@@ -231,7 +244,11 @@ const processData = async (dataArray) => {
       }
 
       for (const entry of record.data.Entries) {
-        out.push({ timestamp: new Date(entry.Utc), data: entry.Cars });
+        out.push({
+          sessionTime: record.timestamp,
+          timestamp: new Date(entry.Utc),
+          data: entry.Cars,
+        });
       }
     }
     return out;
@@ -254,6 +271,7 @@ const processData = async (dataArray) => {
   ) {
     const driversData = {};
     let timestamp = new Date();
+    let sessionTime = new Date();
 
     if (
       carIndex >= flattenedCarData.length ||
@@ -269,6 +287,7 @@ const processData = async (dataArray) => {
           ? flattenedCarData[carIndex]
           : flattenedCarData[flattenedCarData.length - 1];
       timestamp = pos.timestamp;
+      sessionTime = pos.sessionTime;
 
       for (const driverKey of Object.keys(pos.data)) {
         if (
@@ -285,10 +304,16 @@ const processData = async (dataArray) => {
             (nextCarData.timestamp - prevCarData.timestamp),
         );
 
-        if (Object.keys(timingAppData[leaderboardIndex].data.Lines).includes(driverKey)) {
-          if (Object.keys(timingAppData[leaderboardIndex].data.Lines[driverKey]).includes("Line")) {
-            leaderboard[driverKey] = timingAppData[leaderboardIndex].data.Lines[driverKey].Line;
-          }
+        if (
+          Object.keys(timingData[leaderboardIndex].data.Lines).includes(
+            driverKey,
+          ) &&
+          Object.keys(
+            timingData[leaderboardIndex].data.Lines[driverKey],
+          ).includes("Line")
+        ) {
+          leaderboard[driverKey] =
+            timingData[leaderboardIndex].data.Lines[driverKey].Line;
         }
 
         const driver = driverList[driverKey];
@@ -316,6 +341,7 @@ const processData = async (dataArray) => {
           ? flattenedPosition[posIndex]
           : flattenedPosition[flattenedPosition.length - 1];
       timestamp = car.timestamp;
+      sessionTime = car.sessionTime;
 
       for (const driverKey of Object.keys(car.data)) {
         if (
@@ -338,11 +364,16 @@ const processData = async (dataArray) => {
             (nextPos.timestamp - prevPos.timestamp),
         );
 
-        let position;
-        if (Object.keys(timingAppData[leaderboardIndex].data.Lines).includes(driverKey)) {
-          if (Object.keys(timingAppData[leaderboardIndex].data.Lines[driverKey]).includes("Line")) {
-            leaderboard[driverKey] = timingAppData[leaderboardIndex].data.Lines[driverKey].Line;
-          }
+        if (
+          Object.keys(timingData[leaderboardIndex].data.Lines).includes(
+            driverKey,
+          ) &&
+          Object.keys(
+            timingData[leaderboardIndex].data.Lines[driverKey],
+          ).includes("Line")
+        ) {
+          leaderboard[driverKey] =
+            timingData[leaderboardIndex].data.Lines[driverKey].Line;
         }
 
         const driver = driverList[driverKey];
@@ -363,11 +394,14 @@ const processData = async (dataArray) => {
       carIndex++;
     }
 
-    if (lap < lapCount.length && lapCount[lap].timestamp < timestamp) {
+    if (lap < lapCount.length && lapCount[lap].timestamp < sessionTime) {
       lap++;
     }
 
-    if (leaderboardIndex + 1 < timingAppData.length && timingAppData[leaderboardIndex + 1].timestamp < timestamp) {
+    if (
+      leaderboardIndex + 1 < timingData.length &&
+      timingData[leaderboardIndex + 1].timestamp < sessionTime
+    ) {
       leaderboardIndex++;
     }
 

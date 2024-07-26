@@ -1,9 +1,13 @@
 <template>
   <div class="flex w-full space-x-4 items-center">
-    <Icon :icon="isPlaying ? 'mdi:pause' : 'mdi:play'" class="w-8 h-8" @click="togglePlayback" />
-    <Slider 
-      v-model="value" 
-      class="flex items-center w-full h-2 bg-zinc-500 rounded-md" 
+    <Icon
+      :icon="isPlaying ? 'mdi:pause' : 'mdi:play'"
+      class="w-8 h-8"
+      @click="togglePlayback"
+    />
+    <Slider
+      v-model="value"
+      class="flex items-center w-full h-2 bg-zinc-500 rounded-md"
       :min="0"
       :max="dataLength - 1"
       :step="1"
@@ -18,7 +22,7 @@ import { Icon } from "@iconify/vue";
 import Slider from "primevue/slider";
 
 const props = defineProps({
-  dataLength: Number
+  dataLength: Number,
 });
 
 const value = ref(0);
@@ -31,17 +35,16 @@ const updateValue = () => {
   isPlaying.value = false;
   index.value = value.value;
   if (originalState) {
-    setTimeout(() => isPlaying.value = true, 0);
+    setTimeout(() => (isPlaying.value = true), 0);
   } else {
     isPlaying.value = true;
-    setTimeout(() => isPlaying.value = false, 0);
+    setTimeout(() => (isPlaying.value = false), 0);
   }
-}
-
+};
 
 const togglePlayback = () => {
   isPlaying.value = !isPlaying.value;
-}
+};
 
 watch(index, () => {
   value.value = index.value;

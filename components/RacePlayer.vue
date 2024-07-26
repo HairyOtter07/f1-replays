@@ -1,9 +1,20 @@
 <template>
   <div class="flex flex-col w-full p-12 items-center">
-    <div ref="d3Chart"></div>
-    <PlayerControls v-model:is-playing="isPlaying" v-model:index="index" :data-length="data.length" />
-    <p>Lap {{ currentLap }}/{{ totalLaps }}</p>
-    <Leaderboard :drivers="sortedDrivers" class="w-80" />
+    <div class="flex w-full space-x-12 justify-center items-center">
+      <div ref="d3Chart"></div>
+      <div class="flex flex-col items-center bg-zinc-200 pt-3 rounded-xl">
+        <p>Lap {{ currentLap }}/{{ totalLaps }}</p>
+        <Leaderboard
+          :drivers="sortedDrivers"
+          class="w-80 h-[400px] overflow-y-auto"
+        />
+      </div>
+    </div>
+    <PlayerControls
+      v-model:is-playing="isPlaying"
+      v-model:index="index"
+      :data-length="data.length"
+    />
   </div>
   <div
     class="hidden flex-col text-sm bg-zinc-800 text-zinc-200 rounded-md py-2 px-3 !m-0"
@@ -55,19 +66,26 @@ const isRendered = ref(false);
 const nextUpdateTimeout = ref(null);
 const isPlaying = ref(true);
 const index = ref(0);
-const sortedDrivers = computed(() => data.value[index.value] ? Object.keys(data.value[index.value].drivers).map(key => data.value[index.value].drivers[key]).sort((a, b) => a.position - b.position) : []);
+const sortedDrivers = computed(() =>
+  data.value[index.value]
+    ? Object.keys(data.value[index.value].drivers)
+        .map((key) => data.value[index.value].drivers[key])
+        .sort((a, b) => a.position - b.position)
+    : [],
+);
 const currentLap = ref(0);
-const totalLaps = computed(() => data.value.length > 0 ? data.value[data.value.length - 1].lap : 0);
+const totalLaps = computed(() =>
+  data.value.length > 0 ? data.value[data.value.length - 1].lap : 0,
+);
 
 watch(isPlaying, () => {
-    if (!isPlaying.value && nextUpdateTimeout.value) {
-      clearTimeout(nextUpdateTimeout.value);
-    } else {
-      if (index.value > 0) index.value--;
-      updateRace(true);
-    }
+  if (!isPlaying.value && nextUpdateTimeout.value) {
+    clearTimeout(nextUpdateTimeout.value);
+  } else {
+    if (index.value > 0) index.value--;
+    updateRace(true);
   }
-);
+});
 
 let svg = d3.select(d3Chart.value);
 let svgTransform;
@@ -204,11 +222,11 @@ const updateRace = (jump = false) => {
   index.value++;
   if (index.value >= data.value.length) {
     index.value = data.value.length - 1;
+    isPlaying.value = false;
     return;
   }
   const { timestamp, drivers, lap } = data.value[index.value];
-  const duration = jump ? 0 :
-    timestamp - data.value[index.value - 1].timestamp;
+  const duration = jump ? 0 : timestamp - data.value[index.value - 1].timestamp;
 
   svg
     .selectAll("g>circle")
