@@ -65,7 +65,7 @@ const hoverDriverTeam = ref("");
 
 const isRendered = ref(false);
 const nextUpdateTimeout = ref(null);
-const isPlaying = ref(true);
+const isPlaying = ref(false);
 const index = ref(0);
 const sortedDrivers = computed(() =>
   data.value[index.value]
@@ -245,7 +245,9 @@ const updateRace = (jump = false) => {
 };
 
 watch(data, () => {
-  if (data.value.length > 0) renderRace();
-  isPlaying.value = false;
+  if (data.value.length > 0) {
+    isPlaying.value = false;
+    renderRace();
+  }
 });
 </script>

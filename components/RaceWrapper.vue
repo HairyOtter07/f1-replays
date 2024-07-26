@@ -23,12 +23,14 @@ const t0 = ref(null);
 
 const loadingMessage = ref("Loading...");
 const isLoading = ref(true);
+const dataProcessWatcher = ref(null);
+const isProcessingInterrupted = ref(false);
 
 const reactToRef = (reference, handler, handlerArgs = []) => {
   if (reference.value) {
     handler(...handlerArgs);
   } else {
-    watch(reference, () => {
+    return watch(reference, () => {
       handler(...handlerArgs);
     }, {
       once: true
@@ -197,7 +199,7 @@ const interpolateValue = (min, max, percent) => {
   return min + (max - min) * percent;
 };
 
-const processData = async (dataArray) => {
+const processData = (dataArray) => {
   const delay = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
   const sessionStatus = dataArray.find(
@@ -216,6 +218,7 @@ const processData = async (dataArray) => {
   const position = dataArray.find((e) => e.endpoint == "position").data;
   const carData = dataArray.find((e) => e.endpoint == "cardata").data;
 
+  const dataRef = ref(null);
   const data = [];
 
   const startTime = sessionStatus.find(
@@ -270,173 +273,182 @@ const processData = async (dataArray) => {
   let leaderboardIndex = 0;
   let lastUpdate = new Date();
 
-  while (
-    posIndex < flattenedPosition.length ||
-    carIndex < flattenedCarData.length
-  ) {
-    const driversData = {};
-    let timestamp = new Date();
-    let sessionTime = new Date();
-
-    if (
-      carIndex >= flattenedCarData.length ||
-      (posIndex < flattenedPosition.length &&
-        flattenedPosition[posIndex].timestamp <
-          flattenedCarData[carIndex].timestamp)
+  setTimeout(async () => {
+    while (
+      posIndex < flattenedPosition.length ||
+      carIndex < flattenedCarData.length
     ) {
-      const pos = flattenedPosition[posIndex];
-      const prevCarData =
-        carIndex > 0 ? flattenedCarData[carIndex - 1] : flattenedCarData[0];
-      const nextCarData =
-        carIndex < flattenedCarData.length
-          ? flattenedCarData[carIndex]
-          : flattenedCarData[flattenedCarData.length - 1];
-      timestamp = pos.timestamp;
-      sessionTime = pos.sessionTime;
+      if (isProcessingInterrupted.value) {
+        isProcessingInterrupted.value = false;
+        return;
+      }
+      const driversData = {};
+      let timestamp = new Date();
+      let sessionTime = new Date();
 
-      for (const driverKey of Object.keys(pos.data)) {
-        if (
-          !Object.keys(driverList).includes(driverKey) ||
-          !Object.keys(prevCarData.data).includes(driverKey) ||
-          !Object.keys(nextCarData.data).includes(driverKey)
-        )
-          continue;
+      if (
+        carIndex >= flattenedCarData.length ||
+        (posIndex < flattenedPosition.length &&
+          flattenedPosition[posIndex].timestamp <
+            flattenedCarData[carIndex].timestamp)
+      ) {
+        const pos = flattenedPosition[posIndex];
+        const prevCarData =
+          carIndex > 0 ? flattenedCarData[carIndex - 1] : flattenedCarData[0];
+        const nextCarData =
+          carIndex < flattenedCarData.length
+            ? flattenedCarData[carIndex]
+            : flattenedCarData[flattenedCarData.length - 1];
+        timestamp = pos.timestamp;
+        sessionTime = pos.sessionTime;
 
-        const interpolatedSpeed = interpolateValue(
-          prevCarData.data[driverKey].Channels[2],
-          nextCarData.data[driverKey].Channels[2],
-          (timestamp - prevCarData.timestamp) /
-            (nextCarData.timestamp - prevCarData.timestamp),
-        );
+        for (const driverKey of Object.keys(pos.data)) {
+          if (
+            !Object.keys(driverList).includes(driverKey) ||
+            !Object.keys(prevCarData.data).includes(driverKey) ||
+            !Object.keys(nextCarData.data).includes(driverKey)
+          )
+            continue;
 
-        if (
-          Object.keys(timingData[leaderboardIndex].data.Lines).includes(
-            driverKey,
-          ) &&
-          Object.keys(
-            timingData[leaderboardIndex].data.Lines[driverKey],
-          ).includes("Line")
-        ) {
-          leaderboard[driverKey] =
-            timingData[leaderboardIndex].data.Lines[driverKey].Line;
+          const interpolatedSpeed = interpolateValue(
+            prevCarData.data[driverKey].Channels[2],
+            nextCarData.data[driverKey].Channels[2],
+            (timestamp - prevCarData.timestamp) /
+              (nextCarData.timestamp - prevCarData.timestamp),
+          );
+
+          if (
+            Object.keys(timingData[leaderboardIndex].data.Lines).includes(
+              driverKey,
+            ) &&
+            Object.keys(
+              timingData[leaderboardIndex].data.Lines[driverKey],
+            ).includes("Line")
+          ) {
+            leaderboard[driverKey] =
+              timingData[leaderboardIndex].data.Lines[driverKey].Line;
+          }
+
+          const driver = driverList[driverKey];
+
+          driversData[driverKey] = {
+            x: pos.data[driverKey].X,
+            y: -pos.data[driverKey].Y,
+            speed: interpolatedSpeed,
+            position: leaderboard[driverKey],
+            color: driver.TeamColour,
+            name: driver.FullName,
+            number: driver.RacingNumber,
+            team: driver.TeamName,
+            image: driver.HeadshotUrl,
+          };
         }
 
-        const driver = driverList[driverKey];
+        posIndex++;
+      } else {
+        const car = flattenedCarData[carIndex];
+        const prevPos =
+          posIndex > 0 ? flattenedPosition[posIndex - 1] : flattenedPosition[0];
+        const nextPos =
+          posIndex < flattenedPosition.length
+            ? flattenedPosition[posIndex]
+            : flattenedPosition[flattenedPosition.length - 1];
+        timestamp = car.timestamp;
+        sessionTime = car.sessionTime;
 
-        driversData[driverKey] = {
-          x: pos.data[driverKey].X,
-          y: -pos.data[driverKey].Y,
-          speed: interpolatedSpeed,
-          position: leaderboard[driverKey],
-          color: driver.TeamColour,
-          name: driver.FullName,
-          number: driver.RacingNumber,
-          team: driver.TeamName,
-          image: driver.HeadshotUrl,
-        };
-      }
+        for (const driverKey of Object.keys(car.data)) {
+          if (
+            !Object.keys(driverList).includes(driverKey) ||
+            !Object.keys(prevPos.data).includes(driverKey) ||
+            !Object.keys(nextPos.data).includes(driverKey)
+          )
+            continue;
 
-      posIndex++;
-    } else {
-      const car = flattenedCarData[carIndex];
-      const prevPos =
-        posIndex > 0 ? flattenedPosition[posIndex - 1] : flattenedPosition[0];
-      const nextPos =
-        posIndex < flattenedPosition.length
-          ? flattenedPosition[posIndex]
-          : flattenedPosition[flattenedPosition.length - 1];
-      timestamp = car.timestamp;
-      sessionTime = car.sessionTime;
+          const interpolatedX = interpolateValue(
+            prevPos.data[driverKey].X,
+            nextPos.data[driverKey].X,
+            (timestamp - prevPos.timestamp) /
+              (nextPos.timestamp - prevPos.timestamp),
+          );
+          const interpolatedY = interpolateValue(
+            prevPos.data[driverKey].Y,
+            nextPos.data[driverKey].Y,
+            (timestamp - prevPos.timestamp) /
+              (nextPos.timestamp - prevPos.timestamp),
+          );
 
-      for (const driverKey of Object.keys(car.data)) {
-        if (
-          !Object.keys(driverList).includes(driverKey) ||
-          !Object.keys(prevPos.data).includes(driverKey) ||
-          !Object.keys(nextPos.data).includes(driverKey)
-        )
-          continue;
+          if (
+            Object.keys(timingData[leaderboardIndex].data.Lines).includes(
+              driverKey,
+            ) &&
+            Object.keys(
+              timingData[leaderboardIndex].data.Lines[driverKey],
+            ).includes("Line")
+          ) {
+            leaderboard[driverKey] =
+              timingData[leaderboardIndex].data.Lines[driverKey].Line;
+          }
 
-        const interpolatedX = interpolateValue(
-          prevPos.data[driverKey].X,
-          nextPos.data[driverKey].X,
-          (timestamp - prevPos.timestamp) /
-            (nextPos.timestamp - prevPos.timestamp),
-        );
-        const interpolatedY = interpolateValue(
-          prevPos.data[driverKey].Y,
-          nextPos.data[driverKey].Y,
-          (timestamp - prevPos.timestamp) /
-            (nextPos.timestamp - prevPos.timestamp),
-        );
+          const driver = driverList[driverKey];
 
-        if (
-          Object.keys(timingData[leaderboardIndex].data.Lines).includes(
-            driverKey,
-          ) &&
-          Object.keys(
-            timingData[leaderboardIndex].data.Lines[driverKey],
-          ).includes("Line")
-        ) {
-          leaderboard[driverKey] =
-            timingData[leaderboardIndex].data.Lines[driverKey].Line;
+          driversData[driverKey] = {
+            x: interpolatedX,
+            y: -interpolatedY,
+            speed: car.data[driverKey].Channels[2],
+            position: leaderboard[driverKey],
+            color: driver.TeamColour,
+            name: driver.FullName,
+            number: driver.RacingNumber,
+            team: driver.TeamName,
+            image: driver.HeadshotUrl,
+          };
         }
 
-        const driver = driverList[driverKey];
-
-        driversData[driverKey] = {
-          x: interpolatedX,
-          y: -interpolatedY,
-          speed: car.data[driverKey].Channels[2],
-          position: leaderboard[driverKey],
-          color: driver.TeamColour,
-          name: driver.FullName,
-          number: driver.RacingNumber,
-          team: driver.TeamName,
-          image: driver.HeadshotUrl,
-        };
+        carIndex++;
       }
 
-      carIndex++;
+      if (lap < lapCount.length && lapCount[lap].timestamp < sessionTime) {
+        lap++;
+      }
+
+      if (
+        leaderboardIndex + 1 < timingData.length &&
+        timingData[leaderboardIndex + 1].timestamp < sessionTime
+      ) {
+        leaderboardIndex++;
+      }
+
+      data.push({
+        timestamp,
+        drivers: driversData,
+        lap,
+      });
+
+      if (new Date() - lastUpdate > 150) {
+        lastUpdate = new Date();
+        loadingMessage.value = `Processing...${posIndex + carIndex}/${flattenedPosition.length + flattenedCarData.length}`;
+        await delay(0);
+      }
     }
+    dataRef.value = data;
+  }, 100);
 
-    if (lap < lapCount.length && lapCount[lap].timestamp < sessionTime) {
-      lap++;
-    }
-
-    if (
-      leaderboardIndex + 1 < timingData.length &&
-      timingData[leaderboardIndex + 1].timestamp < sessionTime
-    ) {
-      leaderboardIndex++;
-    }
-
-    data.push({
-      timestamp,
-      drivers: driversData,
-      lap,
-    });
-
-    if (new Date() - lastUpdate > 150) {
-      lastUpdate = new Date();
-      loadingMessage.value = `Processing...${posIndex + carIndex}/${flattenedPosition.length + flattenedCarData.length}`;
-      await delay(0);
-    }
-  }
-
-  console.log(data);
-  return data;
+  return dataRef;
 };
 
 const loadData = () => {
   const { data, status } = fetchAllEndpoints(endpoints);
   reactToRef(status, async () => {
     if (status.value) {
-      const d = await processData(data.value);
-      loadingMessage.value = "Rendering...";
-      setTimeout(() => {
-        raceData.value = d
-        isLoading.value = false;
-      }, 0);
+      const d = processData(data.value);
+      dataProcessWatcher.value = reactToRef(d, () => {
+        dataProcessWatcher.value = null;
+        loadingMessage.value = "Rendering...";
+        setTimeout(() => {
+          raceData.value = d.value;
+          isLoading.value = false;
+        }, 0);
+      })
     }
   });
 };
@@ -444,10 +456,14 @@ const loadData = () => {
 reactToRef(t0.value, loadData);
 
 watch(race, () => {
+  if (dataProcessWatcher.value) {
+    (dataProcessWatcher.value)();
+    isProcessingInterrupted.value = true;
+  }
   isLoading.value = true;
   loadingMessage.value = "Loading...";
   setTimeout(() => raceData.value = [], 0);
   t0.value = getInitialTime();
   reactToRef(t0.value, loadData);
-})
+});
 </script>
