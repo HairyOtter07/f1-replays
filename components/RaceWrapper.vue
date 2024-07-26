@@ -14,10 +14,12 @@ import { Buffer } from "buffer";
 
 const props = defineProps({
   race: String
-})
+});
 
-const race = props.race;
+const race = computed(() => props.race);
 const raceData = ref([]);
+
+const t0 = ref(null);
 
 const loadingMessage = ref("Loading...");
 const isLoading = ref(true);
@@ -28,6 +30,8 @@ const reactToRef = (reference, handler, handlerArgs = []) => {
   } else {
     watch(reference, () => {
       handler(...handlerArgs);
+    }, {
+      once: true
     });
   }
 };
@@ -41,7 +45,7 @@ const sessionToComponents = (sessionTimestamp) => {
 const getInitialTime = () => {
   const { data } = useLazyAsyncData("heartbeat", async () => {
     const res = await $fetch(
-      `/api/${race.split("-")[0]}/${race}_Grand_Prix/${race.split("_")[0]}_Race/Heartbeat.jsonStream`,
+      `/api/${race.value.split("-")[0]}/${race.value}_Grand_Prix/${race.value.split("_")[0]}_Race/Heartbeat.jsonStream`,
       {
         responseType: "text",
       },
@@ -92,12 +96,12 @@ const sessionToUtc = (sessionTimestamp, initialTime) => {
   return utc;
 };
 
-const t0 = getInitialTime();
+t0.value = getInitialTime();
 
 const fetchEndpoint = (endpoint) => {
   const { data, status, error } = useLazyAsyncData(endpoint, async () => {
     const res = await $fetch(
-      `/api/${race.split("-")[0]}/${race}_Grand_Prix/${race.split("_")[0]}_Race/${endpoint}`,
+      `/api/${race.value.split("-")[0]}/${race.value}_Grand_Prix/${race.value.split("_")[0]}_Race/${endpoint}`,
       {
         responseType: "text",
       },
@@ -125,7 +129,7 @@ const fetchEndpoint = (endpoint) => {
           to: "string",
         });
         out.push({
-          timestamp: sessionToUtc(sessionTimestamp, t0.value),
+          timestamp: sessionToUtc(sessionTimestamp, t0.value.value),
           data: JSON.parse(decompressed),
         });
       }
@@ -140,7 +144,7 @@ const fetchEndpoint = (endpoint) => {
           record.slice(record.indexOf("{")),
         ];
         out.push({
-          timestamp: sessionToUtc(sessionTimestamp, t0.value),
+          timestamp: sessionToUtc(sessionTimestamp, t0.value.value),
           data: JSON.parse(raw),
         });
       }
@@ -174,6 +178,7 @@ const fetchAllEndpoints = (endpoints) => {
         const combined = [{ endpoint, data: fetchedData.value }, ...rest.value];
         data.value = combined;
         status.value = true;
+        console.log(data.value);
       });
     });
   } else {
@@ -210,8 +215,6 @@ const processData = async (dataArray) => {
   const driverList = dataArray.find((e) => e.endpoint == "driverlist").data;
   const position = dataArray.find((e) => e.endpoint == "position").data;
   const carData = dataArray.find((e) => e.endpoint == "cardata").data;
-
-  console.log(timingData);
 
   const data = [];
 
@@ -428,12 +431,23 @@ const loadData = () => {
   const { data, status } = fetchAllEndpoints(endpoints);
   reactToRef(status, async () => {
     if (status.value) {
-      raceData.value = await processData(data.value);
-      loadingMessage.value = "Done.";
-      isLoading.value = false;
+      const d = await processData(data.value);
+      loadingMessage.value = "Rendering...";
+      setTimeout(() => {
+        raceData.value = d
+        isLoading.value = false;
+      }, 0);
     }
   });
 };
 
-reactToRef(t0, loadData);
+reactToRef(t0.value, loadData);
+
+watch(race, () => {
+  isLoading.value = true;
+  loadingMessage.value = "Loading...";
+  setTimeout(() => raceData.value = [], 0);
+  t0.value = getInitialTime();
+  reactToRef(t0.value, loadData);
+})
 </script>

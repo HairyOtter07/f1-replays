@@ -1,9 +1,14 @@
 <template>
   <div class="w-full h-full">
-    <RaceWrapper class="h-full" race="2024-06-23_Spanish" />
+    <RaceWrapper class="h-full" :race="race" />
   </div>
 </template>
 <script setup>
+const race = ref("2024-06-23_Spanish");
+
+setTimeout(() => {
+  race.value = "2023-09-17_Singapore";
+}, 25000);
 // "2023-09-03_Italian"
 // "2023-09-17_Singapore"
 // "2024-05-26_Monaco"

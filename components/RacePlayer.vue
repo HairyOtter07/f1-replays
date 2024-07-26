@@ -173,6 +173,8 @@ const renderRace = () => {
       }
     });
 
+  d3.select(d3Chart.value).selectChildren("*").remove();
+
   svg = d3
     .select(d3Chart.value)
     .append("svg")
@@ -216,7 +218,7 @@ const renderRace = () => {
     .data(Object.keys(data.value[0].drivers))
     .join((enter) => initDriverPoint(enter, data.value[0].drivers));
 
-  nextUpdateTimeout.value = setTimeout(updateRace, 0);
+  // nextUpdateTimeout.value = setTimeout(updateRace, 0);
 };
 
 const updateRace = (jump = false) => {
@@ -243,6 +245,7 @@ const updateRace = (jump = false) => {
 };
 
 watch(data, () => {
-  renderRace();
+  if (data.value.length > 0) renderRace();
+  isPlaying.value = false;
 });
 </script>
