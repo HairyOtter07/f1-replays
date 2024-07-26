@@ -1,7 +1,8 @@
 <template>
   <div>
-    <h1 class="text-4xl">Hello, World!</h1>
-    <p>{{ loadingMessage }}</p>
+    <div class="flex items-center justify-center w-full h-full" :class="!isLoading && 'hidden'">
+      <p>{{ loadingMessage }}</p>
+    </div>
     <div :class="isLoading && 'hidden'">
       <RacePlayer :data="raceData" />
     </div>
@@ -13,8 +14,8 @@ import { Buffer } from "buffer";
 
 // const race = "2023-09-17_Singapore"
 // const race = "2024-07-07_British"
-// const race = "2024-06-23_Spanish";
-const race = "2024-06-30_Austrian";
+const race = "2024-06-23_Spanish";
+// const race = "2024-06-30_Austrian";
 const raceData = ref([]);
 
 const loadingMessage = ref("Loading...");

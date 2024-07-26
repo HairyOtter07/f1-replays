@@ -1,5 +1,5 @@
 <template>
-  <div class="flex flex-col w-full items-start">
+  <div class="flex flex-col w-full items-start text-zinc-800">
     <div
       class="flex items-center w-full p-0 justify-start h-10"
       v-for="driver in drivers"

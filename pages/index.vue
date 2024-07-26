@@ -1,6 +1,6 @@
 <template>
-  <div>
-    <NuxtLink to="/test">Go</NuxtLink>
+  <div class="w-full h-full">
+    <RaceWrapper class="h-full" />
   </div>
 </template>
 <script setup></script>

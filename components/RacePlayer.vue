@@ -1,12 +1,13 @@
 <template>
   <div class="flex flex-col w-full p-12 items-center">
-    <div class="flex w-full space-x-12 justify-center items-center">
-      <div ref="d3Chart"></div>
-      <div class="flex flex-col items-center bg-zinc-200 pt-3 rounded-xl">
-        <p>Lap {{ currentLap }}/{{ totalLaps }}</p>
+    <div class="flex w-full justify-between items-center">
+      <div class="flex w-full justify-center" ref="d3Chart"></div>
+      <div class="flex flex-col items-center bg-zinc-200 border-zinc-900 border-[1px] w-full max-w-96 rounded-xl overflow-clip">
+        <p class="m-4">Lap {{ currentLap }}/{{ totalLaps }}</p>
+        <hr class="w-full border-zinc-900" />
         <Leaderboard
           :drivers="sortedDrivers"
-          class="w-80 h-[400px] overflow-y-auto"
+          class="h-[400px] overflow-y-auto"
         />
       </div>
     </div>
