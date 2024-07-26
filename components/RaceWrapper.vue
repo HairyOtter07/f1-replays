@@ -12,10 +12,11 @@
 import pako from "pako";
 import { Buffer } from "buffer";
 
-// const race = "2023-09-17_Singapore"
-// const race = "2024-07-07_British"
-const race = "2024-06-23_Spanish";
-// const race = "2024-06-30_Austrian";
+const props = defineProps({
+  race: String
+})
+
+const race = props.race;
 const raceData = ref([]);
 
 const loadingMessage = ref("Loading...");
