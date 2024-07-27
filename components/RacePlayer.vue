@@ -1,5 +1,5 @@
 <template>
-  <div class="flex flex-col w-full p-12 items-center">
+  <div class="flex flex-col w-full p-12 items-center bg-zinc-50">
     <div class="flex w-full justify-between items-center">
       <div class="flex w-full justify-center" ref="d3Chart"></div>
       <div class="flex flex-col items-center bg-zinc-200 border-zinc-900 border-[1px] w-full max-w-96 rounded-xl overflow-clip">
@@ -35,10 +35,11 @@ const d3Chart = ref(null);
 const tooltip = ref(null);
 const data = computed(() => props.data);
 const chartInfo = computed(() => {
-  const minX = Math.min(...data.value.map((d) => d.drivers[1].x)) - 500;
-  const maxX = Math.max(...data.value.map((d) => d.drivers[1].x)) + 500;
-  const minY = Math.min(...data.value.map((d) => d.drivers[1].y)) - 500;
-  const maxY = Math.max(...data.value.map((d) => d.drivers[1].y)) + 500;
+  const refDriver = data.value ? Object.keys(data.value[0].drivers)[0] : undefined;
+  const minX = Math.min(...data.value.map((d) => d.drivers[refDriver].x)) - 500;
+  const maxX = Math.max(...data.value.map((d) => d.drivers[refDriver].x)) + 500;
+  const minY = Math.min(...data.value.map((d) => d.drivers[refDriver].y)) - 500;
+  const maxY = Math.max(...data.value.map((d) => d.drivers[refDriver].y)) + 500;
   const width = maxX - minX;
   const height = maxY - minY;
 
@@ -200,10 +201,11 @@ const renderRace = () => {
     })
     .append("g");
 
+  const pathRefDriver = Object.keys(data.value[0].drivers)[0];
   const path = d3.path();
-  path.moveTo(data.value[0].drivers[1].x, data.value[0].drivers[1].y);
+  path.moveTo(data.value[0].drivers[pathRefDriver].x, data.value[0].drivers[pathRefDriver].y);
   for (const point of data.value.slice(1)) {
-    path.lineTo(point.drivers[1].x, point.drivers[1].y);
+    path.lineTo(point.drivers[pathRefDriver].x, point.drivers[pathRefDriver].y);
   }
 
   svg
