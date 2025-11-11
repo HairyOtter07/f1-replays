@@ -508,6 +508,92 @@ const data = {
             path: "2024-12-08_Abu_Dhabi_Grand_Prix",
         },
     ],
+    2025: [
+        {
+            name: "Australian Grand Prix",
+            path: "2025-03-16_Australian_Grand_Prix",
+        },
+        {
+            name: "Chinese Grand Prix",
+            path: "2025-03-23_Chinese_Grand_Prix",
+        },
+        {
+            name: "Japanese Grand Prix",
+            path: "2025-04-06_Japanese_Grand_Prix",
+        },
+        {
+            name: "Bahrain Grand Prix",
+            path: "2025-04-13_Bahrain_Grand_Prix",
+        },
+        {
+            name: "Saudi Arabian Grand Prix",
+            path: "2025-04-20_Saudi_Arabian_Grand_Prix",
+        },
+        {
+            name: "Miami Grand Prix",
+            path: "2025-05-04_Miami_Grand_Prix",
+        },
+        {
+            name: "Emilia Romagna Grand Prix",
+            path: "2025-05-18_Emilia_Romagna_Grand_Prix",
+        },
+        {
+            name: "Monaco Grand Prix",
+            path: "2025-05-25_Monaco_Grand_Prix",
+        },
+        {
+            name: "Spanish Grand Prix",
+            path: "2025-06-01_Spanish_Grand_Prix",
+        },
+        {
+            name: "Canadian Grand Prix",
+            path: "2025-06-15_Canadian_Grand_Prix",
+        },
+        {
+            name: "Austrian Grand Prix",
+            path: "2025-06-29_Austrian_Grand_Prix",
+        },
+        {
+            name: "British Grand Prix",
+            path: "2025-07-06_British_Grand_Prix",
+        },
+        {
+            name: "Belgian Grand Prix",
+            path: "2025-07-27_Belgian_Grand_Prix",
+        },
+        {
+            name: "Hungarian Grand Prix",
+            path: "2025-08-03_Hungarian_Grand_Prix",
+        },
+        {
+            name: "Dutch Grand Prix",
+            path: "2025-08-31_Dutch_Grand_Prix",
+        },
+        {
+            name: "Italian Grand Prix",
+            path: "2025-09-07_Italian_Grand_Prix",
+        },
+        {
+            name: "Azerbaijan Grand Prix",
+            path: "2025-09-21_Azerbaijan_Grand_Prix",
+        },
+        {
+            name: "Singapore Grand Prix",
+            path: "2025-10-05_Singapore_Grand_Prix",
+        },
+        {
+            name: "United States Grand Prix",
+            path: "2025-10-19_United_States_Grand_Prix",
+        },
+        {
+            name: "Mexico City Grand Prix",
+            path: "2025-10-26_Mexico_City_Grand_Prix",
+        },
+        {
+            name: "São Paulo Grand Prix",
+            path: "2025-11-09_São_Paulo_Grand_Prix",
+        },
+    ],
 };
 
 const race = ref(null);
