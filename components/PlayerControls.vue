@@ -6,14 +6,13 @@
             @click="togglePlayback"
         />
         <Slider
-            v-model="value"
+            v-model="index"
             class="flex items-center w-full h-2 bg-zinc-500 rounded-md hover:cursor-pointer"
             :min="0"
             :max="dataLength - 1"
             :step="1"
             pt:range="!relative h-2 bg-red-500 rounded-l-md"
             pt:handle="!relative !-left-2 w-4 h-4 bg-zinc-900 rounded-full"
-            @change="updateValue"
             @mousedown="handleMouseDown"
         />
     </div>
@@ -26,15 +25,10 @@ const props = defineProps({
     dataLength: Number,
 });
 
-const value = ref(0);
 const originalState = ref(false);
 
 const isPlaying = defineModel("isPlaying", { default: true });
 const index = defineModel("index", { default: 0 });
-
-const updateValue = () => {
-    index.value = value.value;
-};
 
 const handleMouseDown = () => {
     originalState.value = isPlaying.value;
@@ -54,8 +48,4 @@ const cleanupMouseUp = () => {
 const togglePlayback = () => {
     isPlaying.value = !isPlaying.value;
 };
-
-watch(index, () => {
-    value.value = index.value;
-});
 </script>
