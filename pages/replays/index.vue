@@ -5,16 +5,16 @@
             :options="years"
             placeholder="Year"
             class="flex items-center space-x-2 p-2 rounded-lg border-2 border-zinc-300 w-fit hover:bg-zinc-100 hover:cursor-pointer"
-            pt:list="rounded-lg flex flex-col bg-zinc-200 border-2 border-zinc-300 py-1 px-2"
-            pt:option="p-1 w-full hover:bg-zinc-300 hover:cursor-pointer"
+            pt:list="rounded-lg flex flex-col items-center bg-zinc-200 border-2 border-zinc-300 py-1"
+            pt:option="flex flex-row justify-center p-1 w-full hover:bg-zinc-300 hover:cursor-pointer mx-2"
         />
         <Select
             v-model="race"
             :options="races"
             placeholder="Select a Race"
             class="flex items-center justify-between p-2 rounded-lg border-2 border-zinc-300 w-full max-w-60 hover:bg-zinc-100 hover:cursor-pointer"
-            pt:list="rounded-lg flex flex-col bg-zinc-200 border-2 border-zinc-300 py-1 px-2 max-h-80 overflow-y-auto"
-            pt:option="p-1 w-full hover:bg-zinc-300 hover:cursor-pointer"
+            pt:list="rounded-lg flex flex-col items-center bg-zinc-200 border-2 border-zinc-300 py-1 max-h-80 overflow-y-auto overflow-x-hidden"
+            pt:option="flex flex-row justify-center p-1 w-full hover:bg-zinc-300 hover:cursor-pointer mx-2"
         />
         <NuxtLink
             class="flex items-center px-4 py-2 rounded-lg border-2 border-zinc-300 hover:bg-zinc-100"
