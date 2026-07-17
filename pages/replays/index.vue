@@ -593,6 +593,56 @@ const data = {
             name: "São Paulo Grand Prix",
             path: "2025-11-09_São_Paulo_Grand_Prix",
         },
+        {
+            name: "Las Vegas Grand Prix",
+            path: "2025-11-22_Las_Vegas_Grand_Prix",
+        },
+        {
+            name: "Qatar Grand Prix",
+            path: "2025-11-30_Qatar_Grand_Prix",
+        },
+        {
+            name: "Abu Dhabi Grand Prix",
+            path: "2025-12-07_Abu_Dhabi_Grand_Prix",
+        },
+    ],
+    2026: [
+        {
+            name: "Australian Grand Prix",
+            path: "2026-03-08_Australian_Grand_Prix",
+        },
+        {
+            name: "Chinese Grand Prix",
+            path: "2026-03-15_Chinese_Grand_Prix",
+        },
+        {
+            name: "Japanese Grand Prix",
+            path: "2026-03-29_Japanese_Grand_Prix",
+        },
+        {
+            name: "Miami Grand Prix",
+            path: "2026-05-03_Miami_Grand_Prix",
+        },
+        {
+            name: "Canadian Grand Prix",
+            path: "2026-05-24_Canadian_Grand_Prix",
+        },
+        {
+            name: "Monaco Grand Prix",
+            path: "2026-06-07_Monaco_Grand_Prix",
+        },
+        {
+            name: "Barcelona Grand Prix",
+            path: "2026-06-14_Barcelona_Grand_Prix",
+        },
+        {
+            name: "Austrian Grand Prix",
+            path: "2026-06-28_Austrian_Grand_Prix",
+        },
+        {
+            name: "British Grand Prix",
+            path: "2026-07-05_British_Grand_Prix",
+        },
     ],
 };
 
