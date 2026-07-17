@@ -2,18 +2,19 @@
     <div class="flex w-full space-x-4 items-center">
         <Icon
             :icon="isPlaying ? 'mdi:pause' : 'mdi:play'"
-            class="w-8 h-8"
+            class="w-8 h-8 hover:cursor-pointer"
             @click="togglePlayback"
         />
         <Slider
             v-model="value"
-            class="flex items-center w-full h-2 bg-zinc-500 rounded-md"
+            class="flex items-center w-full h-2 bg-zinc-500 rounded-md hover:cursor-pointer"
             :min="0"
             :max="dataLength - 1"
             :step="1"
             pt:range="!relative h-2 bg-red-500 rounded-l-md"
-            pt:handle="!relative !left-0 w-4 h-4 bg-zinc-900 rounded-full"
+            pt:handle="!relative !-left-2 w-4 h-4 bg-zinc-900 rounded-full"
             @change="updateValue"
+            @mousedown="handleMouseDown"
         />
     </div>
 </template>
@@ -26,20 +27,28 @@ const props = defineProps({
 });
 
 const value = ref(0);
+const originalState = ref(false);
 
 const isPlaying = defineModel("isPlaying", { default: true });
 const index = defineModel("index", { default: 0 });
 
 const updateValue = () => {
-    const originalState = isPlaying.value;
-    isPlaying.value = false;
     index.value = value.value;
-    if (originalState) {
-        setTimeout(() => (isPlaying.value = true), 0);
-    } else {
-        isPlaying.value = true;
-        setTimeout(() => (isPlaying.value = false), 0);
-    }
+};
+
+const handleMouseDown = () => {
+    originalState.value = isPlaying.value;
+    isPlaying.value = false;
+    document.addEventListener("mouseup", handleMouseUp);
+};
+
+const handleMouseUp = () => {
+    isPlaying.value = originalState.value;
+    cleanupMouseUp();
+};
+
+const cleanupMouseUp = () => {
+    document.removeEventListener("mouseup", handleMouseUp);
 };
 
 const togglePlayback = () => {
