@@ -12,7 +12,7 @@
             :max="dataLength - 1"
             :step="1"
             pt:range="!relative h-2 bg-red-500 rounded-l-md"
-            pt:handle="!relative !-left-2 w-4 h-4 bg-zinc-900 rounded-full"
+            pt:handle="!relative !left-0 w-1 h-6 bg-zinc-900 rounded-full"
             @mousedown="handleMouseDown"
         />
     </div>
