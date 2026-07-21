@@ -14,9 +14,11 @@
             </div>
         </div>
         <PlayerControls
-            v-model:is-playing="isPlaying"
-            v-model:index="index"
+            ref="controls"
+            v-model="index"
             :data-length="data.length"
+            @pause="onPause"
+            @play="onPlay"
         />
     </div>
     <div
@@ -72,9 +74,9 @@ const chartInfo = computed(() => {
 const hoverDriverName = ref("");
 const hoverDriverTeam = ref("");
 
+const controls = ref(null);
 const isRendered = ref(false);
 const nextUpdateTimeout = ref(null);
-const isPlaying = ref(false);
 const index = ref(0);
 const sortedDrivers = computed(() =>
     data.value[index.value]
@@ -88,14 +90,18 @@ const totalLaps = computed(() =>
     data.value.length > 0 ? data.value[data.value.length - 1].lap : 0,
 );
 
-watch(isPlaying, () => {
-    if (!isPlaying.value && nextUpdateTimeout.value) {
+const onPause = () => {
+    if (nextUpdateTimeout.value) {
         clearTimeout(nextUpdateTimeout.value);
-    } else {
-        if (index.value > 0) index.value--;
-        updateRace(true);
     }
-});
+    if (svg) {
+        svg.selectAll("g>circle").interrupt();
+    }
+};
+
+const onPlay = () => {
+    updateRace(true);
+};
 
 let svg = d3.select(d3Chart.value);
 let svgTransform;
@@ -232,15 +238,13 @@ const renderRace = () => {
     svg.selectAll("g>circle")
         .data(Object.keys(data.value[0].drivers))
         .join((enter) => initDriverPoint(enter, data.value[0].drivers));
-
-    // nextUpdateTimeout.value = setTimeout(updateRace, 0);
 };
 
 const updateRace = (jump = false) => {
     index.value++;
     if (index.value >= data.value.length) {
         index.value = data.value.length - 1;
-        isPlaying.value = false;
+        controls.value.externalPause();
         return;
     }
     const { timestamp, drivers, lap } = data.value[index.value];
@@ -262,7 +266,6 @@ const updateRace = (jump = false) => {
 
 watch(data, () => {
     if (data.value.length > 0) {
-        isPlaying.value = false;
         renderRace();
     }
 });

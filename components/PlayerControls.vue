@@ -25,18 +25,38 @@ const props = defineProps({
     dataLength: Number,
 });
 
-const originalState = ref(false);
+const emit = defineEmits(["pause", "play"]);
 
-const isPlaying = defineModel("isPlaying", { default: true });
-const index = defineModel("index", { default: 0 });
+const index = defineModel({ default: 0 });
+
+const externalPause = () => {
+    isPlaying.value = false;
+};
+defineExpose({
+    externalPause,
+});
+
+const originalState = ref(false);
+const isPlaying = ref(false);
 
 const handleMouseDown = () => {
     originalState.value = isPlaying.value;
     isPlaying.value = false;
+    emit("pause");
     document.addEventListener("mouseup", handleMouseUp);
 };
 
 const handleMouseUp = () => {
+    // delays here are so that the Slider component can update the index value before RacePlayer attempts to process it
+    if (originalState.value) {
+        setTimeout(() => emit("play"), 20);
+    } else {
+        setTimeout(() => {
+            emit("play");
+            // delay to allow processing a single frame
+            setTimeout(() => emit("pause"), 20);
+        }, 20);
+    }
     isPlaying.value = originalState.value;
     cleanupMouseUp();
 };
@@ -46,6 +66,11 @@ const cleanupMouseUp = () => {
 };
 
 const togglePlayback = () => {
+    if (isPlaying.value) {
+        emit("pause");
+    } else {
+        emit("play");
+    }
     isPlaying.value = !isPlaying.value;
 };
 </script>
