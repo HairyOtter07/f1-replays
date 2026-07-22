@@ -58,10 +58,6 @@ const handleMouseUp = () => {
         }, 20);
     }
     isPlaying.value = originalState.value;
-    cleanupMouseUp();
-};
-
-const cleanupMouseUp = () => {
     document.removeEventListener("mouseup", handleMouseUp);
 };
 
