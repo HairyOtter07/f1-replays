@@ -8,20 +8,34 @@
             <SliderSelected />
         </div>
         <SliderHandle ref="handleRef" class="absolute" />
+        <!-- <p class="pl-4">{{ current }}</p> -->
     </div>
 </template>
 <script setup>
-const min = 0;
-const max = 1000;
-const step = 100;
-const current = ref(500);
+const props = defineProps({
+    min: {
+        type: Number,
+        required: true,
+    },
+    max: {
+        type: Number,
+        required: true,
+    },
+    step: {
+        type: Number,
+        required: true,
+    },
+});
+const current = defineModel({ required: true });
 const slider = ref(null);
 const handleRef = ref(null);
 const handleEl = computed(() =>
     handleRef.value ? handleRef.value.$el : undefined,
 );
 
-const widthFraction = computed(() => (current.value - min) / (max - min));
+const widthFraction = computed(
+    () => (current.value - props.min) / (props.max - props.min),
+);
 watch(widthFraction, () => {
     const handleRect = handleEl.value.getBoundingClientRect();
     const handleWidth = handleRect.right - handleRect.left;
@@ -30,10 +44,10 @@ watch(widthFraction, () => {
 });
 
 const calcClosestStep = (value) => {
-    const base = value - min;
-    const mod = base % step;
-    if (mod >= step / 2) {
-        return base + (step - mod);
+    const base = value - props.min;
+    const mod = base % props.step;
+    if (mod >= props.step / 2) {
+        return base + (props.step - mod);
     }
     return base - mod;
 };
@@ -44,11 +58,11 @@ const updateSliderPosition = (event) => {
         (event.clientX - sliderRect.left) /
         (sliderRect.right - sliderRect.left);
 
-    const tentativeValue = fraction * (max - min) + min;
-    if (tentativeValue < min) {
-        current.value = min;
-    } else if (tentativeValue > max) {
-        current.value = max;
+    const tentativeValue = fraction * (props.max - props.min) + props.min;
+    if (tentativeValue < props.min) {
+        current.value = props.min;
+    } else if (tentativeValue > props.max) {
+        current.value = props.max;
     } else {
         current.value = calcClosestStep(tentativeValue);
     }
