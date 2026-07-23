@@ -82,4 +82,19 @@ const togglePlayback = () => {
     }
     isPlaying.value = !isPlaying.value;
 };
+
+const handleSpaceBarPress = (event) => {
+    if (event.code == "Space") {
+        event.preventDefault();
+        togglePlayback();
+    }
+};
+
+onMounted(() => {
+    document.addEventListener("keydown", handleSpaceBarPress);
+});
+
+onUnmounted(() => {
+    document.removeEventListener("keydown", handleSpaceBarPress);
+});
 </script>
