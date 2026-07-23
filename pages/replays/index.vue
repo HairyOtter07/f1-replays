@@ -1,6 +1,6 @@
 <template>
     <div class="flex justify-center w-full h-full">
-        <Select
+        <PrimeSelect
             v-model="year"
             :options="years"
             placeholder="Year"
@@ -8,7 +8,7 @@
             pt:list="rounded-lg flex flex-col items-center bg-zinc-200 border-2 border-zinc-300 py-1"
             pt:option="flex flex-row justify-center p-1 w-full hover:bg-zinc-300 hover:cursor-pointer mx-2"
         />
-        <Select
+        <PrimeSelect
             v-model="race"
             :options="races"
             placeholder="Select a Race"
@@ -25,8 +25,6 @@
     </div>
 </template>
 <script setup>
-import Select from "primevue/select";
-
 const data = {
     2018: [
         {

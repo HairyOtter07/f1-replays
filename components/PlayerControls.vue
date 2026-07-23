@@ -5,21 +5,36 @@
             class="w-8 h-8 hover:cursor-pointer"
             @click="togglePlayback"
         />
-        <Slider
+        <!-- <PrimeSlider
             v-model="index"
             class="flex items-center w-full h-2 bg-zinc-500 rounded-md hover:cursor-pointer"
             :min="0"
             :max="dataLength - 1"
             :step="1"
             pt:range="!relative h-2 bg-red-500 rounded-l-md"
-            pt:handle="!relative !left-0 w-1 h-6 bg-zinc-900 rounded-full"
+            pt:handle="!relative !-left-2 w-4 h-4 bg-zinc-900 rounded-full"
             @mousedown="handleMouseDown"
-        />
+        /> -->
+        <Slider
+            v-model="index"
+            class="w-full h-2 bg-zinc-500 rounded-md"
+            :min="0"
+            :max="dataLength - 1"
+            :step="1"
+            @slide-start="handleSlideStart"
+            @slide-end="handleSlideEnd"
+        >
+            <template #selected-range>
+                <div class="h-2 bg-red-500 rounded-md" />
+            </template>
+            <template #handle>
+                <div class="w-4 h-4 bg-zinc-900 rounded-full" />
+            </template>
+        </Slider>
     </div>
 </template>
 <script setup>
 import { Icon } from "@iconify/vue";
-import Slider from "primevue/slider";
 
 const props = defineProps({
     dataLength: Number,
@@ -39,14 +54,13 @@ defineExpose({
 const originalState = ref(false);
 const isPlaying = ref(false);
 
-const handleMouseDown = () => {
+const handleSlideStart = () => {
     originalState.value = isPlaying.value;
     isPlaying.value = false;
     emit("pause");
-    document.addEventListener("mouseup", handleMouseUp);
 };
 
-const handleMouseUp = () => {
+const handleSlideEnd = () => {
     // delays here are so that the Slider component can update the index value before RacePlayer attempts to process it
     if (originalState.value) {
         setTimeout(() => emit("play"), 20);
@@ -58,7 +72,6 @@ const handleMouseUp = () => {
         }, 20);
     }
     isPlaying.value = originalState.value;
-    document.removeEventListener("mouseup", handleMouseUp);
 };
 
 const togglePlayback = () => {

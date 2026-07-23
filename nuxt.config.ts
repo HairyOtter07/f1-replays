@@ -12,5 +12,8 @@ export default defineNuxtConfig({
     options: {
       unstyled: true,
     },
+    components: {
+      prefix: "Prime",
+    },
   },
 });

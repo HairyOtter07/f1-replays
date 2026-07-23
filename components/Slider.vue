@@ -1,7 +1,7 @@
 <template>
     <div
         ref="slider"
-        class="relative flex flex-row items-center w-full gap-0 h-2 bg-zinc-500 rounded-md hover:cursor-pointer"
+        class="relative flex flex-row items-center gap-0 hover:cursor-pointer"
         @mousedown="onMouseDown"
     >
         <div :style="`width: calc(100% * ${widthFraction});`">
