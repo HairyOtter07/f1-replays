@@ -28,6 +28,8 @@ const props = defineProps({
     },
 });
 const current = defineModel({ required: true });
+const emit = defineEmits(["slideStart", "slideEnd"]);
+
 const slider = ref(null);
 const handle = ref(null);
 
@@ -74,6 +76,7 @@ const onMouseDown = (event) => {
 
     document.addEventListener("mousemove", onMouseMove);
     document.addEventListener("mouseup", onMouseUp);
+    emit("slideStart");
 };
 
 const onMouseMove = (event) => {
@@ -83,5 +86,6 @@ const onMouseMove = (event) => {
 const onMouseUp = (event) => {
     document.removeEventListener("mousemove", onMouseMove);
     document.removeEventListener("mouseup", onMouseUp);
+    emit("slideEnd");
 };
 </script>
