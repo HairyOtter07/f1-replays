@@ -13,6 +13,7 @@
 <script setup>
 const min = 0;
 const max = 1000;
+const step = 100;
 const current = ref(500);
 const slider = ref(null);
 const handleRef = ref(null);
@@ -21,6 +22,21 @@ const handleEl = computed(() =>
 );
 
 const widthFraction = computed(() => (current.value - min) / (max - min));
+watch(widthFraction, () => {
+    const handleRect = handleEl.value.getBoundingClientRect();
+    const handleWidth = handleRect.right - handleRect.left;
+
+    handleEl.value.style.left = `calc(100% * ${widthFraction.value} - ${handleWidth / 2}px`;
+});
+
+const calcClosestStep = (value) => {
+    const base = value - min;
+    const mod = base % step;
+    if (mod >= step / 2) {
+        return base + (step - mod);
+    }
+    return base - mod;
+};
 
 const updateSliderPosition = (event) => {
     const sliderRect = slider.value.getBoundingClientRect();
@@ -28,19 +44,13 @@ const updateSliderPosition = (event) => {
         (event.clientX - sliderRect.left) /
         (sliderRect.right - sliderRect.left);
 
-    const handleRect = handleEl.value.getBoundingClientRect();
-    const handleWidth = handleRect.right - handleRect.left;
-
     const tentativeValue = fraction * (max - min) + min;
     if (tentativeValue < min) {
         current.value = min;
-        handleEl.value.style.left = `calc(0% - ${handleWidth / 2}px`;
     } else if (tentativeValue > max) {
         current.value = max;
-        handleEl.value.style.left = `calc(100% - ${handleWidth / 2}px`;
     } else {
-        current.value = tentativeValue;
-        handleEl.value.style.left = `calc(100% * ${fraction} - ${handleWidth / 2}px`;
+        current.value = calcClosestStep(tentativeValue);
     }
 };
 
