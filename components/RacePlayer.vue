@@ -100,6 +100,7 @@ const onPause = () => {
 };
 
 const onPlay = () => {
+    index.value--;
     updateRace(true);
 };
 
