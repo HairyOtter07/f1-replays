@@ -39,9 +39,7 @@ const widthFraction = computed(
 
 watch(widthFraction, () => {
     const handleRect = handle.value.getBoundingClientRect();
-    const handleWidth = handleRect.right - handleRect.left;
-
-    handle.value.style.left = `calc(100% * ${widthFraction.value} - ${handleWidth / 2}px`;
+    handle.value.style.left = `calc(100% * ${widthFraction.value} - ${handleRect.width / 2}px`;
 });
 
 const calcClosestStep = (value) => {
@@ -56,8 +54,7 @@ const calcClosestStep = (value) => {
 const updateSliderPosition = (event) => {
     const sliderRect = slider.value.getBoundingClientRect();
     const fraction =
-        (event.clientX - sliderRect.left) /
-        (sliderRect.right - sliderRect.left);
+        (event.clientX - (window.scrollX + sliderRect.left)) / sliderRect.width;
 
     const tentativeValue = fraction * (props.max - props.min) + props.min;
     if (tentativeValue < props.min) {
