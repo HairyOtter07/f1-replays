@@ -17,6 +17,7 @@
             ref="controls"
             v-model="index"
             :data-length="data.length"
+            :lap-indices="lapIndices"
             @pause="onPause"
             @play="onPlay"
         />
@@ -78,6 +79,7 @@ const controls = ref(null);
 const isRendered = ref(false);
 const nextUpdateTimeout = ref(null);
 const index = ref(0);
+const lapIndices = ref([]);
 const sortedDrivers = computed(() =>
     data.value[index.value]
         ? Object.keys(data.value[index.value].drivers)
@@ -265,9 +267,22 @@ const updateRace = (jump = false) => {
     nextUpdateTimeout.value = setTimeout(updateRace, duration);
 };
 
+const getLapIndices = () => {
+    const indices = [];
+    let currentLap = 1;
+    for (let i = 0; i < data.value.length; i++) {
+        if (data.value[i].lap != currentLap) {
+            indices.push(i);
+            currentLap++;
+        }
+    }
+    lapIndices.value = indices;
+};
+
 watch(data, () => {
     if (data.value.length > 0) {
         renderRace();
+        getLapIndices();
     }
 });
 </script>

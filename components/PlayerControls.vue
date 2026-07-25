@@ -1,5 +1,5 @@
 <template>
-    <div class="flex w-full space-x-4 items-center">
+    <div class="flex w-full gap-4 items-center">
         <Icon
             :icon="isPlaying ? 'mdi:pause' : 'mdi:play'"
             class="w-8 h-8 hover:cursor-pointer"
@@ -17,6 +17,7 @@
         /> -->
         <Slider
             v-model="index"
+            ref="slider"
             class="w-full h-2 bg-zinc-500 rounded-md"
             :min="0"
             :max="dataLength - 1"
@@ -28,9 +29,21 @@
                 <div class="h-2 bg-red-500 rounded-md" />
             </template>
             <template #handle>
-                <div class="w-4 h-4 bg-zinc-900 rounded-full" />
+                <div class="w-1 h-4 bg-zinc-900 rounded-full" />
             </template>
         </Slider>
+        <div
+            v-for="positionInfo of lapPositions"
+            class="absolute w-1 h-2 bg-zinc-900 pointer-events-none"
+            :style="`left: ${positionInfo.position - 2}px`"
+        >
+            <div
+                v-if="positionInfo.lap % 10 == 0"
+                class="absolute top-full left-1/2 -translate-x-1/2"
+            >
+                {{ positionInfo.lap }}
+            </div>
+        </div>
     </div>
 </template>
 <script setup>
@@ -38,6 +51,7 @@ import { Icon } from "@iconify/vue";
 
 const props = defineProps({
     dataLength: Number,
+    lapIndices: Array,
 });
 
 const emit = defineEmits(["pause", "play"]);
@@ -51,8 +65,21 @@ defineExpose({
     externalPause,
 });
 
+const slider = ref(null);
 const originalState = ref(false);
 const isPlaying = ref(false);
+
+const lapPositions = computed(() => {
+    const positions = [];
+    for (const [i, lapIndex] of props.lapIndices.entries()) {
+        positions.push({
+            lap: i + 2,
+            position: slider.value.getValuePosition(lapIndex),
+        });
+    }
+    console.log(positions);
+    return positions;
+});
 
 const handleSlideStart = () => {
     originalState.value = isPlaying.value;

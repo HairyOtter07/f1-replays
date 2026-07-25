@@ -33,6 +33,18 @@ const emit = defineEmits(["slideStart", "slideEnd"]);
 const slider = ref(null);
 const handle = ref(null);
 
+const getValuePosition = (value) => {
+    const stepValue = calcClosestStep(value);
+    const fraction = (stepValue - props.min) / (props.max - props.min);
+    const sliderRect = slider.value.getBoundingClientRect();
+    const position =
+        window.scrollX + sliderRect.x + fraction * sliderRect.width;
+    return position;
+};
+defineExpose({
+    getValuePosition,
+});
+
 const widthFraction = computed(
     () => (current.value - props.min) / (props.max - props.min),
 );
@@ -43,6 +55,8 @@ watch(widthFraction, () => {
 });
 
 const calcClosestStep = (value) => {
+    if (value < props.min) return props.min;
+    if (value > props.max) return props.max;
     const base = value - props.min;
     const mod = base % props.step;
     if (mod >= props.step / 2) {
@@ -56,14 +70,9 @@ const updateSliderPosition = (event) => {
     const fraction =
         (event.clientX - (window.scrollX + sliderRect.left)) / sliderRect.width;
 
-    const tentativeValue = fraction * (props.max - props.min) + props.min;
-    if (tentativeValue < props.min) {
-        current.value = props.min;
-    } else if (tentativeValue > props.max) {
-        current.value = props.max;
-    } else {
-        current.value = calcClosestStep(tentativeValue);
-    }
+    current.value = calcClosestStep(
+        fraction * (props.max - props.min) + props.min,
+    );
 };
 
 const onMouseDown = (event) => {
