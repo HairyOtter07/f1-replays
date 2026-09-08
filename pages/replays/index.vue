@@ -641,6 +641,22 @@ const data = {
             name: "British Grand Prix",
             path: "2026-07-05_British_Grand_Prix",
         },
+        {
+            name: "Belgian Grand Prix",
+            path: "2026-07-19_Belgian_Grand_Prix",
+        },
+        {
+            name: "Hungarian Grand Prix",
+            path: "2026-07-26_Hungarian_Grand_Prix",
+        },
+        {
+            name: "Dutch Grand Prix",
+            path: "2026-08-23_Dutch_Grand_Prix",
+        },
+        {
+            name: "Italian Grand Prix",
+            path: "2026-09-06_Italian_Grand_Prix",
+        },
     ],
 };
 
